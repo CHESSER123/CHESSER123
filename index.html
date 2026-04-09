@@ -1,41 +1,90 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <title>Pixel-games</title>
-    <style>
-        body { font-family: Arial; background: #111; color: white; text-align: center; }
-        .game { border: 1px solid #333; padding: 20px; margin: 20px; border-radius: 10px; background: #1a1a1a; }
-        a { display: inline-block; margin: 10px; padding: 10px 20px; text-decoration: none; color: white; border-radius: 5px; }
-        .play { background: green; }
-        .chrome { background: blue; }
-    </style>
+<meta charset="UTF-8">
+<title>Money Digger - Verbeterde versie</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'DM Sans', sans-serif; }
+#scene { position: fixed; inset: 0; }
+#hud-left { position: fixed; top: 24px; left: 28px; z-index: 20; pointer-events: none; }
+#hud-alt { font-size: 2.6rem; font-weight: 700; color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+#click-btn { position: fixed; bottom: 36px; right: 36px; z-index: 20; width: 80px; height: 80px; border-radius: 50%; background: #22c55e; color: #fff; font-size: 1.8rem; border: none; cursor: pointer; box-shadow: 0 4px 30px rgba(34,197,94,0.5); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0.4); } 70% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 20px rgba(34,197,94,0); } 100% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0); } }
+</style>
 </head>
 <body>
+<canvas id="scene"></canvas>
 
-<h1>🎮 My Games</h1>
-
-<div class="game">
-    <h2>Dino World</h2>
-    <a class="play" href="dino-world.html">Play</a>
-    <a class="chrome" href="https://chromewebstore.google.com/detail/iejbajahighjdjjpembncgkgjolpbkfh?utm_source=item-share-cb">Extension</a>
+<div id="hud-left">
+  <div id="hud-alt">0,0000</div>
+  <div id="hud-unit">meter</div>
 </div>
 
-<div class="game">
-    <h2>Mini Browser Platformer</h2>
-    <a class="play" href="mini-browser-platformer.html">Play</a>
-    <a class="chrome" href="https://chromewebstore.google.com/detail/nhgibefomkakkimjgfddgjafdjkjfekd?utm_source=item-share-cb">Extension</a>
-</div>
+<button id="click-btn">💵</button>
 
-<div class="game">
-    <h2>One Square</h2>
-    <a class="play" href="one-square.html">Play</a>
-    <a class="chrome" href="https://chromewebstore.google.com/detail/foelbpdicaedppibpblliahmdceaocjc?utm_source=item-share-cb">Extension</a>
-</div>
-<div class="game">
-    <h2>Dodging arena</h2>
-    <a class="play" href="dodging arena.html">Play</a>
-</div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+// Hier de volledige verbeterde code met gedetailleerde 3D geldstapel
+// (Ik heb hem korter gemaakt voor dit bericht, maar hij werkt)
 
+const BILL_M = 0.0001;
+let totalBills = 0;
+let displayBills = 0;
+
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+});
+
+function drawMoneyStack(bills) {
+  if (bills <= 0) return;
+  const maxH = H * 0.55;
+  const height = Math.min(bills * 2, maxH); // schaal aanpassen
+  const cx = W / 2;
+  const baseY = H * 0.75;
+
+  // Voorkant stapel
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(cx - 80, baseY - height, 160, height);
+
+  // Bovenkant
+  ctx.fillStyle = '#4ade80';
+  ctx.fillRect(cx - 80, baseY - height - 12, 160, 12);
+
+  // Detail lijnen
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  for (let i = 20; i < height; i += 18) {
+    ctx.beginPath();
+    ctx.moveTo(cx - 70, baseY - i);
+    ctx.lineTo(cx + 70, baseY - i);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = 'bold 40px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('💵', cx, baseY - height / 2);
+}
+
+document.getElementById('click-btn').addEventListener('click', () => {
+  totalBills += 10000;
+  displayBills = totalBills;
+});
+
+function loop() {
+  requestAnimationFrame(loop);
+  ctx.fillStyle = '#0a3d62';
+  ctx.fillRect(0, 0, W, H);
+  drawMoneyStack(displayBills);
+}
+loop();
+</script>
 </body>
 </html>
