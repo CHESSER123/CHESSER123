@@ -5,35 +5,26 @@
 <title>Money Digger</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono&display=swap');
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'DM Sans', sans-serif; }
-
 #scene { position: fixed; inset: 0; }
 
 #hud-left { position: fixed; top: 24px; left: 28px; z-index: 20; pointer-events: none; }
-#hud-alt { font-size: 2.6rem; font-weight: 700; color: #fff; line-height: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.5); letter-spacing: -1px; }
+#hud-alt { font-size: 2.6rem; font-weight: 700; color: #fff; line-height: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
 #hud-unit { font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.7); margin-top: 2px; }
-#hud-next { margin-top: 10px; font-size: 0.72rem; color: rgba(255,255,255,0.55); max-width: 220px; line-height: 1.4; }
 
-#milestone-banner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 30; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.4s; }
-#milestone-banner.show { opacity: 1; }
-#milestone-emoji { font-size: 3.5rem; }
-#milestone-name { font-size: 1.3rem; font-weight: 700; color: #fff; margin-top: 8px; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
-#milestone-sub { font-size: 0.72rem; color: rgba(255,255,255,0.65); margin-top: 4px; }
+#bill-counter { position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%); z-index: 20; text-align: center; }
+#bill-number { font-size: 1.5rem; font-weight: 700; color: #22c55e; font-family: 'DM Mono', monospace; }
+#bill-label { font-size: 0.65rem; color: rgba(255,255,255,0.5); }
 
 #click-btn {
   position: fixed; bottom: 36px; right: 36px; z-index: 20;
   width: 80px; height: 80px; border-radius: 50%; border: none;
-  background: #22c55e; color: #fff; font-size: 1.8rem; cursor: pointer;
-  box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0.4);
+  background: #22c55e; color: #fff; font-size: 1.9rem; cursor: pointer;
+  box-shadow: 0 4px 30px rgba(34,197,94,0.6);
   animation: pulse 2s infinite;
 }
-@keyframes pulse { 0% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0.4); } 70% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 20px rgba(34,197,94,0); } 100% { box-shadow: 0 4px 30px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0); } }
-
-#bill-counter { position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%); z-index: 20; text-align: center; pointer-events: none; }
-#bill-number { font-size: 1.4rem; font-weight: 700; color: #22c55e; font-family: 'DM Mono', monospace; }
-#bill-label { font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+@keyframes pulse { 0% { box-shadow: 0 4px 30px rgba(34,197,94,0.6); } 70% { box-shadow: 0 4px 30px rgba(34,197,94,0.6), 0 0 0 22px rgba(34,197,94,0); } 100% { box-shadow: 0 4px 30px rgba(34,197,94,0.6); } }
 </style>
 </head>
 <body>
@@ -43,13 +34,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font
 <div id="hud-left">
   <div id="hud-alt">0,0000</div>
   <div id="hud-unit">meter</div>
-  <div id="hud-next"></div>
-</div>
-
-<div id="milestone-banner">
-  <div id="milestone-emoji">🌍</div>
-  <div id="milestone-name"></div>
-  <div id="milestone-sub"></div>
 </div>
 
 <div id="bill-counter">
@@ -59,32 +43,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font
 
 <button id="click-btn">💵</button>
 
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
-// ====================== VOLLEDIGE CODE ======================
 const BILL_M = 0.0001;
-
-const MILESTONES = [
-  { m: 0, label: 'Grond', emoji: '🌱', sky: [135, 206, 235] },
-  { m: 1, label: '10.000 biljetten — 1 meter!', emoji: '📏', sky: [135, 206, 235] },
-  { m: 4, label: 'Deurhoogte', emoji: '🚪', sky: [130, 200, 230] },
-  { m: 8.5, label: 'Hoogte van een huis', emoji: '🏠', sky: [125, 195, 225] },
-  { m: 46, label: 'Scheve Toren van Pisa', emoji: '🗼', sky: [115, 185, 220] },
-  { m: 96, label: 'Grote Piramide van Gizeh', emoji: '🔺', sky: [105, 175, 215] },
-  { m: 169, label: 'Washington Monument', emoji: '🏛️', sky: [100, 170, 210] },
-  { m: 324, label: 'Eiffeltoren', emoji: '🗼', sky: [90, 160, 205] },
-  { m: 443, label: 'Empire State Building', emoji: '🏙️', sky: [80, 150, 200] },
-  { m: 634, label: 'Tokyo Skytree', emoji: '📡', sky: [70, 140, 195] },
-  { m: 828, label: 'Burj Khalifa', emoji: '🏙️', sky: [60, 130, 190] },
-  { m: 1000, label: '1 kilometer hoog!', emoji: '🎉', sky: [50, 120, 180] },
-  { m: 2000, label: 'Laagste wolken', emoji: '☁️', sky: [40, 100, 165] },
-  { m: 8849, label: 'Top van de Everest', emoji: '🏔️', sky: [25, 75, 140] },
-  { m: 10000, label: 'Kruisshoogte vliegtuig', emoji: '✈️', sky: [15, 55, 115] },
-  { m: 36000, label: 'Straalstroom', emoji: '💨', sky: [8, 30, 80] },
-  { m: 100000, label: 'Kármánlijn — ruimte!', emoji: '🚀', sky: [2, 5, 20] },
-];
-
-let totalBills = parseInt(localStorage.getItem('md2_bills') || '0');
+let totalBills = parseInt(localStorage.getItem('md_bills') || '0');
 let displayBills = totalBills;
 let targetBills = totalBills;
 
@@ -99,93 +60,126 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-function getSkyColor(altM) {
-  let lo = MILESTONES[0], hi = MILESTONES[MILESTONES.length-1];
-  for(let i = 0; i < MILESTONES.length-1; i++) {
-    if(altM >= MILESTONES[i].m && altM < MILESTONES[i+1].m) { lo = MILESTONES[i]; hi = MILESTONES[i+1]; break; }
-  }
-  const t = lo.m === hi.m ? 0 : Math.min(1, (altM - lo.m) / (hi.m - lo.m));
-  return [
-    Math.round(lo.sky[0] + (hi.sky[0] - lo.sky[0]) * t),
-    Math.round(lo.sky[1] + (hi.sky[1] - lo.sky[1]) * t),
-    Math.round(lo.sky[2] + (hi.sky[2] - lo.sky[2]) * t)
-  ];
+function getSkyColor(alt) {
+  if (alt < 1000) return [100, 180, 240];
+  if (alt < 10000) return [60, 140, 200];
+  return [20, 60, 120];
 }
 
-function drawGround() {
-  const gy = H * 0.72;
+function drawGround(alt) {
+  const gy = H * 0.73;
+  const a = Math.max(0.1, 1 - alt / 5000);
+  ctx.globalAlpha = a;
   const grad = ctx.createLinearGradient(0, gy, 0, H);
-  grad.addColorStop(0, '#323232');
-  grad.addColorStop(1, '#1c1c1c');
+  grad.addColorStop(0, '#2a2a2a');
+  grad.addColorStop(1, '#1a1a1a');
   ctx.fillStyle = grad;
   ctx.fillRect(0, gy, W, H - gy);
+  ctx.globalAlpha = 1;
 }
 
 function drawMoneyStack(bills) {
   if (bills <= 0) return;
-  const maxPixH = H * 0.52;
-  let stackPixH = bills;
-  if (stackPixH > maxPixH) stackPixH = maxPixH;
-
+  const maxH = H * 0.55;
+  let h = Math.min(bills * 1.6, maxH);
   const cx = W / 2;
-  const by = H * 0.72;
-  const sw = 145;
-  const depth = 26;
-  const top = by - stackPixH;
+  const baseY = H * 0.73;
+  const sw = 148;
+  const depth = 28;
+  const top = baseY - h;
 
   ctx.save();
 
-  // Voorkant
-  const frontGrad = ctx.createLinearGradient(cx - sw/2, top, cx + sw/2, by);
-  frontGrad.addColorStop(0, '#22c55e');
-  frontGrad.addColorStop(0.4, '#34d46b');
-  frontGrad.addColorStop(1, '#15803d');
-  ctx.fillStyle = frontGrad;
-  ctx.fillRect(cx - sw/2, top, sw, stackPixH);
+  // Rechter zijkant (donker)
+  ctx.fillStyle = '#145a24';
+  ctx.beginPath();
+  ctx.moveTo(cx + sw/2, top);
+  ctx.lineTo(cx + sw/2 + depth, top - depth*0.5);
+  ctx.lineTo(cx + sw/2 + depth, baseY - depth*0.5);
+  ctx.lineTo(cx + sw/2, baseY);
+  ctx.fill();
 
-  // Biljetlijnen
-  ctx.strokeStyle = 'rgba(10,50,20,0.65)';
-  ctx.lineWidth = 1.5;
-  const lines = Math.min(220, Math.floor(stackPixH / 1.8));
-  for (let i = 0; i < lines; i++) {
-    const y = top + (stackPixH / lines) * i;
+  // Voorkant (mooie gradient)
+  const grad = ctx.createLinearGradient(cx - sw/2, top, cx + sw/2, baseY);
+  grad.addColorStop(0, '#22c55e');
+  grad.addColorStop(0.45, '#4ade80');
+  grad.addColorStop(1, '#15803d');
+  ctx.fillStyle = grad;
+  ctx.fillRect(cx - sw/2, top, sw, h);
+
+  // Biljet lijnen
+  ctx.strokeStyle = 'rgba(0,40,15,0.6)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 140; i++) {
+    const y = top + (h / 140) * i;
     ctx.beginPath();
-    ctx.moveTo(cx - sw/2 + 8, y);
-    ctx.lineTo(cx + sw/2 - 8, y);
+    ctx.moveTo(cx - sw/2 + 10, y);
+    ctx.lineTo(cx + sw/2 - 10, y);
     ctx.stroke();
   }
 
-  // Bovenkant (3D)
-  const topGrad = ctx.createLinearGradient(cx - sw/2, top, cx + sw/2 + depth, top - depth*0.45);
-  topGrad.addColorStop(0, '#4ade80');
-  topGrad.addColorStop(1, '#34c16a');
-  ctx.fillStyle = topGrad;
+  // Bovenkant (volgt mooi de zijkant)
+  ctx.fillStyle = '#86efac';
   ctx.beginPath();
   ctx.moveTo(cx - sw/2, top);
   ctx.lineTo(cx + sw/2, top);
-  ctx.lineTo(cx + sw/2 + depth, top - depth*0.45);
-  ctx.lineTo(cx - sw/2 + depth, top - depth*0.45);
+  ctx.lineTo(cx + sw/2 + depth, top - depth*0.48);
+  ctx.lineTo(cx - sw/2 + depth, top - depth*0.48);
   ctx.closePath();
   ctx.fill();
 
-  // Symbool
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.font = `bold ${Math.min(48, stackPixH*0.25)}px DM Mono`;
+  // 💵 symbool groot op de stapel
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = 'bold 46px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('💵', cx, top + stackPixH * 0.5);
+  ctx.fillText('💵', cx, top + h * 0.48);
 
   ctx.restore();
 }
 
+// Eenvoudige voorwerpen / dieren (verschijnen naarmate je hoger komt)
+function drawObjects(alt) {
+  const gy = H * 0.73;
+
+  if (alt < 50) {
+    // Boom
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(W*0.25, gy - 120, 35, 120);
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath(); ctx.arc(W*0.27, gy - 140, 55, 0, Math.PI*2); ctx.fill();
+  }
+
+  if (alt > 30 && alt < 300) {
+    // Giraffe
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(W*0.72, gy - 180, 28, 180);           // nek + lijf
+    ctx.fillRect(W*0.68, gy - 210, 40, 45);            // hoofd
+    ctx.fillStyle = '#854d0e';
+    ctx.fillRect(W*0.73, gy - 40, 22, 40);             // poten
+  }
+
+  if (alt > 100) {
+    // Huis
+    ctx.fillStyle = '#b91c1c';
+    ctx.beginPath();
+    ctx.moveTo(W*0.12, gy - 90);
+    ctx.lineTo(W*0.22, gy - 140);
+    ctx.lineTo(W*0.32, gy - 90);
+    ctx.fill();
+    ctx.fillStyle = '#1e40af';
+    ctx.fillRect(W*0.15, gy - 90, 40, 45);
+  }
+}
+
 document.getElementById('click-btn').addEventListener('click', () => {
-  totalBills += 10000;
+  totalBills += 15000;
   targetBills = totalBills;
-  localStorage.setItem('md2_bills', totalBills);
+  localStorage.setItem('md_bills', totalBills);
 });
 
 function loop() {
   requestAnimationFrame(loop);
-  displayBills += (targetBills - displayBills) * 0.12;
+  displayBills += (targetBills - displayBills) * 0.1;
 
   const altM = displayBills * BILL_M;
   const [r,g,b] = getSkyColor(altM);
@@ -193,20 +187,22 @@ function loop() {
   ctx.fillStyle = `rgb(${r},${g},${b})`;
   ctx.fillRect(0, 0, W, H);
 
-  drawGround();
+  drawGround(altM);
+  drawObjects(altM);
   drawMoneyStack(displayBills);
 
-  // HUD update
+  // Tellers updaten
   const altEl = document.getElementById('hud-alt');
   const unitEl = document.getElementById('hud-unit');
   if (altM >= 1000) {
-    altEl.textContent = (altM/1000).toFixed(4);
+    altEl.textContent = (altM / 1000).toFixed(4);
     unitEl.textContent = 'kilometer';
   } else {
     altEl.textContent = altM.toFixed(4);
     unitEl.textContent = 'meter';
   }
-  document.getElementById('bill-number').textContent = totalBills.toLocaleString('nl-NL');
+
+  document.getElementById('bill-number').textContent = Math.floor(totalBills).toLocaleString('nl-NL');
 }
 loop();
 </script>
